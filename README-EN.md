@@ -1,6 +1,7 @@
 <p align="center">
     【<a href="README.md">中文</a> | English】
 </p>
+
 ## 1. Background
 When users open a webpage, they occasionally experience slow resource loading. This issue can be caused by various factors, including but not limited to: poor network speed, distant CDN node scheduling, slow origin server response, etc. While debugging such issues, it's often necessary to gather complete chain logs from the user side to the origin server. In AWS CloudFront, all requests that reach the CloudFront POP points are logged for query purposes. However, the metrics related to loading from the user side (DNS resolution time, TCP connection time, request time, response time, etc.) cannot be recorded at the POP points and need to be collected on the user side. The usual method is to use curl to obtain various metrics, but for end-users, most of them do not have the capability and tools to execute curl commands in the command line. Therefore, a convenient tool is needed to allow users to easily collect and report these metrics.
 
