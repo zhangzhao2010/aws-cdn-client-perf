@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Perf</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 1000px;
+            box-sizing: border-box;
+            margin: 0 auto;
+            /* Center the card */
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .card-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .card-content div {
+            padding: 5px 0;
+        }
+
+        .card-content div:nth-child(odd) {
+            font-weight: bold;
+        }
+
+        /* 图像容器居中对齐 */
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        /* 图像自适应屏幕宽度并保持比例 */
+        .image-container img {
+            max-width: 80%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<script>
+    function callLater() {
+        console.log('call delay');
+        setTimeout(getEntries, 1000);
+    }
+
+    function getEntries() {
+        // 浏览器支持的API
+        var performance = window.performance;
+
+        if (!performance || !performance.timing) {
+            console.log('当前浏览器不支持Performance Time API');
+            return;
+        }
+        uuid = generateRandomString(20);
+
+        var entries = performance.getEntries();
+        console.log(entries);
+        var newEntries = [{
+            'name': uuid,
+            'uuid': uuid,
+        }];
+        var reload = false;
+        for (var i = 0; i < entries.length; i++) {
+            if (entries[i]["entryType"] != "navigation" && entries[i]["entryType"] != "resource") {
+                continue;
+            }
+
+            newEntry = calculateMetrics(entries[i]);
+            if (newEntry === -1) {
+                reload = true;
+                break;
+            }
+            console.log(newEntry);
+            newEntries.push(newEntry);
+        }
+
+        if (reload) {
+            console.log('getTiming delay');
+            setTimeout(getEntries, 1000);
+            return;
+        }
+
+        showEntries(newEntries);
+
+        newEntries.push({ 'originData': entries });
+        reportMetrics(newEntries, uuid);
+    }
+
+    function calculateMetrics(entry) {
+        // console.log(entry);
+        promptForUnload = 'unloadEventStart' in entry ? (entry['unloadEventEnd'] - entry['unloadEventStart']).toFixed(2) : 0;
+        redirect = 'redirectEnd' in entry ? (entry['redirectEnd'] - entry['redirectStart']).toFixed(2) : 0;
+        fetch = 'fetchStart' in entry ? (entry['domainLookupStart'] - entry['fetchStart']).toFixed(2) : 0;
+        dns = 'domainLookupEnd' in entry ? (entry['domainLookupEnd'] - entry['domainLookupStart']).toFixed(2) : 0;
+        tcp = 'connectEnd' in entry ? (entry['connectEnd'] - entry['connectStart']).toFixed(2) : 0;
+        request = 'requestStart' in entry ? (entry['responseStart'] - entry['requestStart']).toFixed(2) : 0;
+        response = 'responseStart' in entry ? (entry['responseEnd'] - entry['responseStart']).toFixed(2) : 0;
+        // processing = 'domComplete' in entry ? (entry['domComplete'] - entry['domInteractive']).toFixed(2) : 0;
+        // loadEvent = 'loadEventEnd' in entry ? (entry['loadEventEnd'] - entry['loadEventStart']).toFixed(2) : 0;
+
+        // if (loadEvent < 0) {
+        //     return -1;
+        // }
+
+        totalTime = Number(dns) + Number(tcp) + Number(request) + Number(response);
+
+        return {
+            'name': entry['name'],
+            'entryType': entry['entryType'],
+            'startTime': entry['startTime'].toFixed(2),
+            'duration': entry['duration'].toFixed(2),
+            'promptForUnload': promptForUnload,
+            'redirect': redirect,
+            'fetch': fetch,
+            'dns': dns,
+            'tcp': tcp,
+            'request': request,
+            'response': response,
+            // 'processing': processing,
+            // 'loadEvent': loadEvent,
+            'totalTime': totalTime.toFixed(2),
+        }
+    }
+
+    function showEntries(data) {
+        const container = document.getElementById('container');
+
+        // 遍历对象数组，并生成HTML内容
+        data.forEach(item => {
+            // 创建一个新的div元素
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('card');
+
+            // 生成包含对象属性的HTML内容
+            let itemContent = `<div class="card-title">${item.name}</div><div class="card-content">`;
+            for (const key in item) {
+                if (item.hasOwnProperty(key)) {
+                    itemContent += `<div>${key}</div><div>${item[key]}</div>`;
+                }
+            }
+            itemContent += '</div>';
+
+            // 将生成的HTML内容设置为div的innerHTML
+            itemDiv.innerHTML = itemContent;
+
+            // 将新创建的div添加到容器中
+            container.appendChild(itemDiv);
+        });
+    }
+
+    function reportMetrics(data, uuid) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://6v8nmgzogj.execute-api.us-west-2.amazonaws.com/report/' + uuid, true); // 初始化一个异步POST请求
+        xhr.setRequestHeader('Content-Type', 'application/json'); // 设置请求头，告诉服务器发送的是JSON数据
+
+        // 定义请求完成后的回调函数
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                // 请求成功时的处理
+                console.log('Success:', JSON.parse(xhr.responseText));
+            } else {
+                // 请求失败时的处理
+                console.error('Error:', xhr.statusText);
+            }
+        };
+
+        // 定义请求出错时的回调函数
+        xhr.onerror = function () {
+            console.error('Request failed');
+        };
+
+        // 将JS对象数组转换为JSON字符串并发送请求
+        xhr.send(JSON.stringify(data));
+    }
+
+    function generateRandomString(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+
+</script>
+
+<body>
+    <div class="image-container">
+        <img src="https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png" />
+        <img src="https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png?a=a" />
+    </div>
+    <div id="container"></div>
+</body>
+<script>
+    // window.onload = callLater();
+    window.addEventListener('load', (event) => {
+        console.log('Load event fired');
+        callLater();
+    });
+</script>
+
+</html>
