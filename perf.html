@@ -67,9 +67,41 @@
     </style>
 </head>
 <script>
+    var loadInfo = {};
     function callLater() {
+        loadImage();
         console.log('call delay');
         setTimeout(getEntries, 1000);
+    }
+
+    function loadImage() {
+        const imageUrl = 'https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png'; // 替换为你要加载的图片 URL
+
+        const imgList = ['myImage1', 'myImage2', 'myImage3'];
+        imgList.forEach(function (imgId) {
+            fetch(imageUrl)
+                .then(response => {
+                    // 获取响应头信息
+                    const headers = response.headers;
+                    const headersJson = {};
+                    for (const [key, value] of headers.entries()) {
+                        headersJson[key] = value;
+                    }
+                    console.log('Response Headers (JSON):', JSON.stringify(headersJson));
+                    loadInfo[imgId] = headersJson;
+
+                    // 设置图片 src 属性
+                    return response.blob();
+                })
+                .then(blob => {
+                    const imageUrl = URL.createObjectURL(blob);
+                    const img = document.getElementById(imgId);
+                    img.src = imageUrl;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
     }
 
     function getEntries() {
@@ -112,6 +144,8 @@
         showEntries(newEntries);
 
         newEntries.push({ 'originData': entries });
+        newEntries.push({ 'image_load_header': loadInfo });
+
         reportMetrics(newEntries, uuid);
     }
 
@@ -216,8 +250,10 @@
 
 <body>
     <div class="image-container">
-        <img src="https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png" />
-        <img src="https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png?a=a" />
+        <!-- <img src="https://dzf0mrmgw3o7o.cloudfront.net/aws_bp_logo_cn_color_03_e33fe78d.png" /> -->
+        <img id="myImage1" src="" alt="My Image">
+        <img id="myImage2" src="" alt="My Image">
+        <img id="myImage3" src="" alt="My Image">
     </div>
     <div id="container"></div>
 </body>
