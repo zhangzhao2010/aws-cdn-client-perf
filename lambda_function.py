@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+import time
 
 dynamodb = boto3.resource('dynamodb')
 table_name = os.environ['TABLE_NAME']
@@ -19,7 +20,12 @@ def lambda_handler(event, context):
         table.put_item(
             Item={
                 'uuid': uuid,
-                'data': body
+                'data': body,
+                'source_ip': event['requestContext']['http']['sourceIp'],
+                'x-forwarded-for': event['headers']['x-forwarded-for'],
+                'headers': json.dumps(event['headers']),
+                'http': json.dumps(event['requestContext']['http']),
+                'timestamp': int(time.time())
             }
         )
 
