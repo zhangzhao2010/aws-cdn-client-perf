@@ -64,7 +64,7 @@ Runtime: Python 3.12；
 1. 把保证本地或者 EC2 具有查询 DynamoDB 的权限。
 2. 安装 Python3.12，并执行以下命令：
 ```
-pip install streamlit
+pip install streamlit plotly pandas boto3
 streamlit run app.py
 ```
 3. 使用 `uuid` 进行数据查询，工具界面如下：

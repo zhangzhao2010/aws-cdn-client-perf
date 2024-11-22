@@ -65,7 +65,7 @@ This tool can be run locally or on an EC2 instance to easily query and display d
 1. Ensure your local environment or EC2 instance has the necessary permissions to query DynamoDB.  
 2. Install Python 3.12 and run the following commands:  
    ```bash
-   pip install streamlit
+   pip install streamlit plotly pandas boto3
    streamlit run app.py
    ```
 3. Use the `uuid` to query data. The interface is shown below:  
