@@ -20,11 +20,9 @@ def lambda_handler(event, context):
         table.put_item(
             Item={
                 'uuid': uuid,
-                'data': body,
                 'source_ip': event['requestContext']['http']['sourceIp'],
                 'x-forwarded-for': event['headers']['x-forwarded-for'],
-                'headers': json.dumps(event['headers']),
-                'http': json.dumps(event['requestContext']['http']),
+                'data': body,
                 'timestamp': int(time.time())
             }
         )
