@@ -1,22 +1,17 @@
 import json
 import boto3
-import os
 import time
 
 dynamodb = boto3.resource('dynamodb')
-table_name = os.environ['TABLE_NAME']
+table_name = 'cdn-perf-reports'
 table = dynamodb.Table(table_name)
 
 
 def lambda_handler(event, context):
     try:
-        # 获取路径参数中的uuid
         uuid = event['pathParameters']['uuid']
-
-        # 获取请求体中的JSON数据
         body = event['body']
 
-        # 将数据存储在DynamoDB中
         table.put_item(
             Item={
                 'uuid': uuid,

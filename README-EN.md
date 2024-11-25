@@ -24,7 +24,6 @@ A Python and Streamlit-based tool to query and visualize reported data for analy
 ### 2) Create a Lambda Function
 - Runtime: Python 3.12  
 - Copy the code from `lambda_function.py`.  
-- In **Configuration -> Environment Variables**, add the environment variable: `TABLE_NAME` with the value `cdn-perf-reports`.  
 - Configure the Lambda execution role to include permissions for writing to DynamoDB:  
 
 ```json
@@ -76,5 +75,6 @@ This tool is designed for debugging purposes and is not intended as a regular me
 You can deploy the tool on a server and share the page link with users when issues are reported. Users can click the link to automatically detect and report relevant metrics.
 
 ## 6. References
-- [W3C Resource Timing API](https://w3c.github.io/resource-timing/)  
-- [Performance Monitoring with Performance API](https://juejin.cn/post/6844904182202253325)
+- [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing)
+- [Navigation Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming)
+- [Paint Timing](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming)

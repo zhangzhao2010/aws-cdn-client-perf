@@ -24,7 +24,6 @@ Capacity mode: On-demand
 ### 2) 创建Lambda函数
 Runtime: Python 3.12；  
 代码复制lambda_funtion.py的代码；  
-在 Configuration -> Environment variables 中添加环境变量: TABLE_NAME，值为cdn-perf-reports；  
 配置Lambda函数的执行角色，确保其具有写入DynamoDB的权限；  
 
 ```
@@ -75,5 +74,6 @@ streamlit run app.py
 可以将工具部署在服务端，当用户侧反馈有问题的时候，将页面链接发送给用户，用户点击链接后会自动检测和上报相关信息。  
 
 ## 5. 相关资料
-https://w3c.github.io/resource-timing/  
-https://juejin.cn/post/6844904182202253325  
+- [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing)
+- [Navigation Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming)
+- [Paint Timing](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming)
