@@ -73,7 +73,7 @@ streamlit run app.py
 此工具设计的初衷是用来 Debug 问题，而不是作为日常的指标收集方案。所以请只在需要的时候才使用。  
 可以将工具部署在服务端，当用户侧反馈有问题的时候，将页面链接发送给用户，用户点击链接后会自动检测和上报相关信息。  
 
-## 5. 相关资料
+## 6. 相关资料
 - [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing)
 - [Navigation Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming)
 - [Paint Timing](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming)
