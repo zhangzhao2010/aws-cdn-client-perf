@@ -3,28 +3,31 @@
 </p>
 
 ## 1. Background
-Users may occasionally experience slow resource loading when opening web pages. This issue could be caused by various factors, including slow internet speeds, CDN node misrouting, or slow origin server responses.  
-When debugging such issues, it’s often necessary to collect complete logs tracing the user-side to the origin server. In AWS CloudFront, all requests reaching the CloudFront POP points are logged, making it possible to query related logs. However, user-side loading metrics (such as DNS resolution time, TCP connection time, request time, and response time) cannot be recorded at the POP points and need to be collected on the user side. A common method is to use `curl` to retrieve these metrics. However, many end users lack the skills or tools to execute `curl` commands via the terminal. Therefore, a convenient tool is needed to help users collect and report these metrics easily.
 
-## 2. Tools Overview
-This project provides two tools:  
+Users occasionally experience slow resource loading when opening web pages. This issue can be caused by various factors, including slow network speeds, distant CDN nodes, or slow response times from the origin server.  
+When debugging such problems, a complete trace from the user’s side to the origin server is often needed. In AWS CloudFront, all requests reaching the CloudFront POP are logged, making it possible to query related logs. However, metrics related to user-side loading (e.g., DNS resolution time, TCP connection time, request time, response time, etc.) are not recorded at the POP and must be collected on the user’s side. Typically, `curl` is used to collect these metrics, but most end users lack the tools or skills to execute `curl` commands on the command line. Thus, a convenient tool is required to allow users to easily collect and report metrics.
+
+## 2. Tool Description
+
+This project provides two tools:
+
 **Metric Collection and Reporting Tool:**  
-This tool leverages the browser's Performance API to collect various metrics using JavaScript and uploads them to the server. The server uses API Gateway to expose an API endpoint, processes the incoming requests with Lambda, and stores the data in DynamoDB.  
+This tool uses the browser’s Performance API to collect metrics in a webpage using JavaScript and reports them to a backend. The backend uses API Gateway to expose an API endpoint, processes the reports using Lambda, and stores the data in DynamoDB.
 
 **Data Visualization Tool:**  
-A Python and Streamlit-based tool to query and visualize reported data for analysis easily.
+A Python-based tool developed with Streamlit to query and visualize user-reported data for analysis.
 
 ## 3. Deployment Steps
 
-### 1) Create a DynamoDB Table
-- Table Name: `cdn-perf-reports`  
-- Partition Key: `uuid` (String)  
-- Capacity Mode: On-Demand  
+### 1) Create a DynamoDB Table  
+- **Table Name:** `cdn-perf-reports`  
+- **Partition Key:** `uuid` (String)  
+- **Capacity Mode:** On-demand  
 
-### 2) Create a Lambda Function
-- Runtime: Python 3.12  
-- Copy the code from `lambda_function.py`.  
-- Configure the Lambda execution role to include permissions for writing to DynamoDB:  
+### 2) Create a Lambda Function  
+- **Runtime:** Python 3.12  
+- **Code:** Copy the code from `lambda_function.py`.  
+- **Execution Role:** Ensure the Lambda function has permission to write to DynamoDB:  
 
 ```json
 {
@@ -43,38 +46,52 @@ A Python and Streamlit-based tool to query and visualize reported data for analy
 }
 ```
 
-### 3) Create an API Gateway
-- Type: HTTP API  
-- Create a new route: `/report/{uuid}`, method: POST  
-- Integrate this route with the Lambda function. Set the **Payload format version** to 2.0.  
+### 3) Create an API Gateway  
+- **Type:** HTTP API  
+- **Route:** `/report/{uuid}` with method `POST`  
+- Integrate the route with the Lambda function using Payload Format Version 2.0.  
 
-### 4) Modify `perf.html`
-- Replace `report.example.com` with the API Gateway address.  
-- Update `imageUrl` to the URL of an image distributed via CDN (ensure the domain matches the domain hosting `perf.html`).  
-- Deploy `perf.html` to an accessible origin server (e.g., a web server or S3 bucket) and optionally distribute it via CDN.  
+### 4) (Optional) Deploy a Subdomain in Route53 to Record Resolver Information  
+1. Create a hosted zone in Route53 for a subdomain, e.g., `perf.example.com`, and configure a **Query Logging Configuration** for the hosted zone to enable query logs.  
+2. Add a record to the hosted zone:  
+   - **Record Name:** `*.perf.example.com`  
+   - **Record Type:** `A` or `CNAME`  
+3. The performance page will use a generated `uuid` to create a unique domain, e.g., `asddfg123.perf.example.com`, and trigger DNS resolution by sending a GET request to this domain.  
 
-### 5) Deployment Complete
-Visit the `perf.html` address. The page will display the collected metrics and allow users to find the corresponding `uuid`. Using this `uuid`, you can query the reported metrics in DynamoDB.  
-![perf.html](./image.png)
+### 5) Modify `perf.html`  
+- Update the `reportUrl` to your API Gateway endpoint.  
+- Update `imageUrls` to point to images served via the CDN (ensure the domain matches the one loading `perf.html`).  
+- Deploy `perf.html` to an accessible origin (server or S3 bucket). Optionally, distribute it via CDN.  
+- (Optional) Update `r53Url` to a test domain URL, e.g., `https://uuid.perf.example.com/test.jpg`.  
 
-## 4. Data Visualization Tool
-This tool can be run locally or on an EC2 instance to easily query and display data.
+### 6) Deployment Complete  
+Visit the URL of `perf.html`. The page will display collected metrics. You can also query the reported metrics in DynamoDB using the `uuid` displayed on the page.  
 
-### Steps to Run:
-1. Ensure your local environment or EC2 instance has the necessary permissions to query DynamoDB.  
+![perf.html](./perf.jpeg)
+
+## 4. Data Visualization Tool  
+
+The visualization tool can be run locally or on an EC2 instance, enabling easy querying and display of data.  
+
+Steps to Run:  
+1. Ensure local or EC2 instances have DynamoDB query permissions.  
 2. Install Python 3.12 and run the following commands:  
-   ```bash
-   pip install streamlit plotly pandas boto3
-   streamlit run app.py
-   ```
-3. Use the `uuid` to query data. The interface is shown below:  
-   ![data_visualization_tool](./perf_report_tool.jpeg)
 
-## 5. Additional Notes
-This tool is designed for debugging purposes and is not intended as a regular metric collection solution. Use it only when necessary.  
-You can deploy the tool on a server and share the page link with users when issues are reported. Users can click the link to automatically detect and report relevant metrics.
+```bash
+pip install streamlit plotly pandas boto3
+streamlit run app.py
+```
 
-## 6. References
-- [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing)
-- [Navigation Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming)
-- [Paint Timing](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming)
+3. Query data using the `uuid` (Route53 query logs may take up to five minutes to appear).  
+
+The tool interface appears as follows:  
+![data_visualization_tool](./perf_report_tool.jpeg)
+
+## 5. Additional Notes  
+This tool is designed for debugging rather than routine metric collection. Use it only when necessary.  
+The tools can be deployed server-side. When issues are reported by users, send them the page link. The page will automatically collect and report metrics upon user interaction.  
+
+## 6. References  
+- [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing)  
+- [Navigation Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming)  
+- [Paint Timing](https://developer.mozilla.org/en-US/docs/Web/API/PerformancePaintTiming)  

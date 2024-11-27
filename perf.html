@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Perf</title>
+    <title>Performance Monitoring</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,16 +23,17 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            width: 1000px;
-            box-sizing: border-box;
+            width: 100%;
+            max-width: 800px;
             margin: 0 auto;
-            /* Center the card */
+            box-sizing: border-box;
         }
 
         .card-title {
             font-weight: bold;
             margin-bottom: 10px;
             text-align: center;
+            font-size: 18px;
         }
 
         .card-content {
@@ -51,185 +52,197 @@
 
         .image-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
-            padding: 10px;
+            justify-content: center;
         }
 
-        .image-container img {
-            max-width: 60%;
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .image-wrapper img {
+            max-width: 200px;
             height: auto;
             display: block;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        .placeholder {
+            color: #888;
+            font-size: 12px;
+            text-align: center;
         }
     </style>
 </head>
-<script>
-    var imageLoadingHeaders = [];
-    function callLater() {
-        loadImage();
-        console.log('call delay');
-        setTimeout(getEntries, 3000);
-    }
-
-    function loadImage() {
-        // change to your test image
-        const imageUrl = 'https://xxxxxx.png';
-
-        const imgList = ['myImage1', 'myImage2', 'myImage3'];
-        imgList.forEach(function (imgId) {
-            fetch(imageUrl)
-                .then(response => {
-                    // get response header
-                    const headers = response.headers;
-                    const headersJson = {};
-                    for (const [key, value] of headers.entries()) {
-                        headersJson[key] = value;
-                    }
-                    console.log('Response Headers (JSON):', JSON.stringify(headersJson));
-                    imageLoadingHeaders.push(headersJson);
-
-                    return response.blob();
-                })
-                .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
-                    const img = document.getElementById(imgId);
-                    img.src = blobUrl;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        });
-    }
-
-    function getEntries() {
-        var performance = window.performance;
-
-        if (!performance || !performance.timing) {
-            console.log('Current browser does not support Performance Time API');
-            return;
-        }
-        uuid = generateRandomString(20);
-
-        var entries = performance.getEntries();
-        console.log(entries);
-
-        // report metrics
-        data = {
-            'entries': entries,
-            'image_loading_headers': imageLoadingHeaders
-        }
-        reportMetrics(uuid, data);
-
-        // show entries
-        showEntries(entries);
-    }
-
-    // report metrics to server
-    function reportMetrics(uuid, data) {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://xxxxxx.apigateway.com/report/' + uuid, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log('Success:', JSON.parse(xhr.responseText));
-            } else {
-                console.error('Error:', xhr.statusText);
-            }
-        };
-
-        xhr.onerror = function () {
-            console.error('Request failed');
-        };
-
-        xhr.send(JSON.stringify(data));
-    }
-
-    function calculateMetrics(entry) {
-        promptForUnload = 'unloadEventStart' in entry ? (entry['unloadEventEnd'] - entry['unloadEventStart']).toFixed(2) : 0;
-        redirect = 'redirectEnd' in entry ? (entry['redirectEnd'] - entry['redirectStart']).toFixed(2) : 0;
-        fetch = 'fetchStart' in entry ? (entry['domainLookupStart'] - entry['fetchStart']).toFixed(2) : 0;
-        dns = 'domainLookupEnd' in entry ? (entry['domainLookupEnd'] - entry['domainLookupStart']).toFixed(2) : 0;
-        tcp = 'connectEnd' in entry ? (entry['connectEnd'] - entry['connectStart']).toFixed(2) : 0;
-        request = 'requestStart' in entry ? (entry['responseStart'] - entry['requestStart']).toFixed(2) : 0;
-        response = 'responseStart' in entry ? (entry['responseEnd'] - entry['responseStart']).toFixed(2) : 0;
-
-        totalTime = Number(dns) + Number(tcp) + Number(request) + Number(response);
-
-        return {
-            'name': entry['name'],
-            'entryType': entry['entryType'],
-            'startTime': entry['startTime'].toFixed(2),
-            'duration': entry['duration'].toFixed(2),
-            'promptForUnload': promptForUnload,
-            'redirect': redirect,
-            'fetch': fetch,
-            'dns': dns,
-            'tcp': tcp,
-            'request': request,
-            'response': response,
-            'totalTime': totalTime.toFixed(2),
-        }
-    }
-
-    function showEntries(entries) {
-        var data = [{
-            'uuid': uuid,
-        }];
-        for (var i = 0; i < entries.length; i++) {
-            if (entries[i]["entryType"] != "navigation" && entries[i]["entryType"] != "resource") {
-                continue;
-            }
-
-            data.push(calculateMetrics(entries[i]));
-        }
-
-        const container = document.getElementById('container');
-
-        data.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.classList.add('card');
-
-            let itemContent = `<div class="card-title">${item.name}</div><div class="card-content">`;
-            for (const key in item) {
-                if (item.hasOwnProperty(key)) {
-                    itemContent += `<div>${key}</div><div>${item[key]}</div>`;
-                }
-            }
-            itemContent += '</div>';
-
-            itemDiv.innerHTML = itemContent;
-            container.appendChild(itemDiv);
-        });
-    }
-
-    function generateRandomString(length) {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-
-</script>
 
 <body>
-    <div class="image-container">
-        <img id="myImage1" src="" alt="My Image">
-        <img id="myImage2" src="" alt="My Image">
-        <img id="myImage3" src="" alt="My Image">
-    </div>
+    <div class="image-container" id="imageContainer"></div>
     <div id="container"></div>
+
+    <script>
+        const imageUrls = [
+            'https://test.example.com/test.png',
+            'https://test.example.com/test.png',
+            'https://test.example.com/test.png'
+        ];
+        const reportUrl = 'https://test.execute-api.us-west-2.amazonaws.com/report/';
+
+        // get DNS resolver info from route53 log
+        const isReportR53Log = true
+        let r53Url = 'https://uuid.perf.example.com/test.png'
+
+        let imageLoadingHeaders = [];
+        let uuid = '';
+
+        // Generate random UUID
+        function generateRandomString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        // Load images dynamically
+        function loadImages() {
+            const imageContainer = document.getElementById('imageContainer');
+            imageUrls.forEach((url, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('image-wrapper');
+
+                const placeholder = document.createElement('div');
+                placeholder.classList.add('placeholder');
+                placeholder.textContent = 'Loading...';
+
+                const img = document.createElement('img');
+                img.id = `img${index}`;
+                img.alt = `Image ${index}`;
+                wrapper.appendChild(placeholder);
+                wrapper.appendChild(img);
+                imageContainer.appendChild(wrapper);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                        const headers = Object.fromEntries(response.headers.entries());
+                        imageLoadingHeaders.push(headers);
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        img.src = URL.createObjectURL(blob);
+                        placeholder.remove();
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        placeholder.textContent = 'Failed to load';
+                    });
+            });
+        }
+
+        // Get performance entries
+        function getEntries() {
+            if (!window.performance || !window.performance.getEntries) {
+                console.warn('Performance API not supported.');
+                return;
+            }
+
+            uuid = generateRandomString(20);
+            const entries = window.performance.getEntries();
+            const data = {
+                "entries": entries,
+                "image_loading_headers": imageLoadingHeaders,
+                "isReportR53Log": isReportR53Log
+            };
+
+            reportMetrics(uuid, data);
+            displayEntries(entries);
+
+            if (isReportR53Log) {
+                r53Url = r53Url.replace("uuid", uuid);
+                fetch(r53Url, {
+                    method: 'GET'
+                }).then(response => {
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                });
+            }
+        }
+
+        // Report metrics to the server
+        function reportMetrics(uuid, data) {
+            fetch(reportUrl + uuid, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => console.log('Reported successfully:', data))
+                .catch(err => console.error('Failed to report:', err));
+        }
+
+        // Display performance entries
+        function displayEntries(entries) {
+            const container = document.getElementById('container');
+            container.innerHTML = '';
+
+            // show uuid
+            const card = document.createElement('div');
+            card.classList.add('card');
+
+            let content = `<div class="card-title">uuid</div><div class="card-content">`;
+            content += `<div>uuid</div><div>${uuid}</div>`;
+            content += '</div>';
+            card.innerHTML = content;
+            container.appendChild(card);
+
+            entries
+                .filter(entry => entry.entryType === 'navigation' || entry.entryType === 'resource')
+                .forEach(entry => {
+                    const metrics = calculateMetrics(entry);
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+
+                    let content = `<div class="card-title">${metrics.name}</div><div class="card-content">`;
+                    for (const [key, value] of Object.entries(metrics)) {
+                        content += `<div>${key}</div><div>${value}</div>`;
+                    }
+                    content += '</div>';
+                    card.innerHTML = content;
+                    container.appendChild(card);
+                });
+        }
+
+        // Calculate metrics for an entry
+        function calculateMetrics(entry) {
+            const metrics = {
+                name: entry.name,
+                entryType: entry.entryType,
+                startTime: entry.startTime.toFixed(2),
+                duration: entry.duration.toFixed(2),
+                dns: entry.domainLookupEnd - entry.domainLookupStart || 0,
+                tcp: entry.connectEnd - entry.connectStart || 0,
+                request: entry.responseStart - entry.requestStart || 0,
+                response: entry.responseEnd - entry.responseStart || 0,
+                totalTime: (entry.responseEnd - entry.startTime).toFixed(2)
+            };
+            return metrics;
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            loadImages();
+            setTimeout(getEntries, 3000);
+        });
+    </script>
 </body>
-<script>
-    // window.onload = callLater();
-    window.addEventListener('load', (event) => {
-        console.log('Load event fired');
-        callLater();
-    });
-</script>
 
 </html>

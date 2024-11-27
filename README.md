@@ -48,14 +48,20 @@ Runtime: Python 3.12；
 新建route：/report/{uuid} ，method: POST  
 将改route与Lambda集成，Payload format version：2.0  
 
-### 4) 修改perf.html
-将 `report.example.com` 改为API Gateway地址；  
-将页面里 `imageUrl` 改为通过CDN分发的图片地址（域名需要和perf.html加载的域名是同一个）;  
-将 `pert.html` 放在可访问的源站上（服务器/S3），可通过CDN进行分发；  
+### 4) (Optional) 在 Route53 上部署子域名以记录Resolver信息
+1. 在Route53上单独创建一个子域名的 Hosted Zone 用于记录DNS 查询日志，例如子域名为 perf.example.com，为该 hosted zone 配置Query logging configuration以开启query log；
+2. 添加一个解析记录，record name为 *.perf.example.com，record type可以为A或CNAME；
+3. perf页面会使用生成的uuid构建一个唯一域名，例如：asddfg123.perf.example.com，尝试向该域名发送一个GET请求以触发DNS解析；
 
-### 5) 部署完成
+### 5) 修改perf.html
+将页面的`reportUrl`改为 APIGateway 地址
+将页面里`imageUrls`改为通过CDN分发的图片地址（域名需要和perf.html加载的域名是同一个）;  
+将 `pert.html` 放在可访问的源站上（服务器/S3），可通过CDN进行分发；
+（可选）修改`r53Url`为测试域名url，例如：`https://uuid.perf.example.com/test.jpg`
+
+### 6) 部署完成
 访问 `perf.html` 地址，页面中会展示收集到的指标，也可以根据页面中展示出来的 `uuid`，在 DynamoDB 中查询到上报到服务端到指标信息；  
-![perf.html](./image.png)
+![perf.html](./perf.jpeg)
 
 ## 4. 数据可视化工具
 在本地或者EC2上可直接运行此工具，可以方便的查询和展示数据。
@@ -66,7 +72,7 @@ Runtime: Python 3.12；
 pip install streamlit plotly pandas boto3
 streamlit run app.py
 ```
-3. 使用 `uuid` 进行数据查询，工具界面如下：
+3. 使用 `uuid` 进行数据查询（Route53 query log需要等待五分钟后才能查询到），工具界面如下：
 ![data_visualization_tool](./perf_report_tool.jpeg)
 
 ## 5. 额外说明
