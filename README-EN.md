@@ -67,7 +67,7 @@ A Python-based tool developed with Streamlit to query and visualize user-reporte
 ### 6) Deployment Complete  
 Visit the URL of `perf.html`. The page will display collected metrics. You can also query the reported metrics in DynamoDB using the `uuid` displayed on the page.  
 
-![perf.html](./perf.jpeg)
+![perf.html](./assets/perf.jpeg)
 
 ## 4. Data Visualization Tool  
 
@@ -85,7 +85,7 @@ streamlit run app.py
 3. Query data using the `uuid` (Route53 query logs may take up to five minutes to appear).  
 
 The tool interface appears as follows:  
-![data_visualization_tool](./perf_report_tool.jpeg)
+![data_visualization_tool](./assets/perf_report_tool.jpeg)
 
 ## 5. Additional Notes  
 This tool is designed for debugging rather than routine metric collection. Use it only when necessary.  
