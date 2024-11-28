@@ -14,6 +14,8 @@
 **数据可视化工具：**
 使用 Python 和 streamlit 开发的展示工具，可以方便的查询和展示用户上报的数据以进行分析。
 
+![Architecture](./assets/cdn-perf-architecture.png)
+
 ## 3. 部署步骤
 
 ### 1) 创建DynamoDB表
@@ -23,7 +25,7 @@ Capacity mode: On-demand
 
 ### 2) 创建Lambda函数
 Runtime: Python 3.12；  
-代码复制lambda_funtion.py的代码；  
+代码复制 lambda/lambda_funtion.py的代码；  
 配置Lambda函数的执行角色，确保其具有写入DynamoDB的权限；  
 
 ```
@@ -53,7 +55,7 @@ Runtime: Python 3.12；
 2. 添加一个解析记录，record name为 *.perf.example.com，record type可以为A或CNAME；
 3. perf页面会使用生成的uuid构建一个唯一域名，例如：asddfg123.perf.example.com，尝试向该域名发送一个GET请求以触发DNS解析；
 
-### 5) 修改perf.html
+### 5) 修改 `html/perf.html`
 将页面的`reportUrl`改为 APIGateway 地址
 将页面里`imageUrls`改为通过CDN分发的图片地址（域名需要和perf.html加载的域名是同一个）;  
 将 `pert.html` 放在可访问的源站上（服务器/S3），可通过CDN进行分发；
@@ -61,7 +63,7 @@ Runtime: Python 3.12；
 
 ### 6) 部署完成
 访问 `perf.html` 地址，页面中会展示收集到的指标，也可以根据页面中展示出来的 `uuid`，在 DynamoDB 中查询到上报到服务端到指标信息；  
-![perf.html](./perf.jpeg)
+![perf.html](./assets/perf.jpeg)
 
 ## 4. 数据可视化工具
 在本地或者EC2上可直接运行此工具，可以方便的查询和展示数据。
@@ -70,10 +72,10 @@ Runtime: Python 3.12；
 2. 安装 Python3.12，并执行以下命令：
 ```
 pip install streamlit plotly pandas boto3
-streamlit run app.py
+streamlit run streamlist/app.py
 ```
 3. 使用 `uuid` 进行数据查询（Route53 query log需要等待五分钟后才能查询到），工具界面如下：
-![data_visualization_tool](./perf_report_tool.jpeg)
+![data_visualization_tool](./assets/perf_report_tool.jpeg)
 
 ## 5. 额外说明
 此工具设计的初衷是用来 Debug 问题，而不是作为日常的指标收集方案。所以请只在需要的时候才使用。  
